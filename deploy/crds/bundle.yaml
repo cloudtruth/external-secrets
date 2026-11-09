@@ -8321,6 +8321,102 @@ spec:
                         - module
                         - url
                       type: object
+                    sigmaconfig:
+                      description: SigmaConfig configures this store to sync secrets using the Sigma Config provider
+                      properties:
+                        auth:
+                          description: Auth configures how the operator authenticates with the Sigma Config API.
+                          properties:
+                            apiKeySecretRef:
+                              description: APIKeySecretRef references the Kubernetes Secret key that holds a Sigma Config API key.
+                              properties:
+                                key:
+                                  description: |-
+                                    A key in the referenced Secret.
+                                    Some instances of this field may be defaulted, in others it may be required.
+                                  maxLength: 253
+                                  minLength: 1
+                                  pattern: ^[-._a-zA-Z0-9]+$
+                                  type: string
+                                name:
+                                  description: The name of the Secret resource being referred to.
+                                  maxLength: 253
+                                  minLength: 1
+                                  pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                                  type: string
+                                namespace:
+                                  description: |-
+                                    The namespace of the Secret resource being referred to.
+                                    Ignored if referent is not cluster-scoped, otherwise defaults to the namespace of the referent.
+                                  maxLength: 63
+                                  minLength: 1
+                                  pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                                  type: string
+                              type: object
+                          required:
+                            - apiKeySecretRef
+                          type: object
+                        caBundle:
+                          description: |-
+                            CABundle is a base64-encoded PEM CA certificate to trust in addition to the
+                            system roots, for a server behind a private CA. TLS verification is always on.
+                          format: byte
+                          type: string
+                        caProvider:
+                          description: CAProvider reads the CA certificate from a Secret or ConfigMap instead of CABundle.
+                          properties:
+                            key:
+                              description: The key where the CA certificate can be found in the Secret or ConfigMap.
+                              maxLength: 253
+                              minLength: 1
+                              pattern: ^[-._a-zA-Z0-9]+$
+                              type: string
+                            name:
+                              description: The name of the object located at the provider type.
+                              maxLength: 253
+                              minLength: 1
+                              pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                              type: string
+                            namespace:
+                              description: |-
+                                The namespace the Provider type is in.
+                                Can only be defined when used in a ClusterSecretStore.
+                              maxLength: 63
+                              minLength: 1
+                              pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                              type: string
+                            type:
+                              description: The type of provider to use such as "Secret", or "ConfigMap".
+                              enum:
+                                - Secret
+                                - ConfigMap
+                              type: string
+                          required:
+                            - name
+                            - type
+                          type: object
+                        environment:
+                          default: default
+                          description: Environment is the name of the Sigma Config environment whose values are read.
+                          type: string
+                        project:
+                          description: Project is the name of the Sigma Config project to read from. Matched exactly.
+                          minLength: 1
+                          type: string
+                        server:
+                          default: https://api.cloudtruth.io
+                          description: Server is the base URL of the Sigma Config API.
+                          pattern: ^https://
+                          type: string
+                        tag:
+                          description: |-
+                            Tag pins every read from this store to the values as they were at this tag
+                            in the environment. remoteRef.version overrides it for a single key.
+                          type: string
+                      required:
+                        - auth
+                        - project
+                      type: object
                     vault:
                       description: Vault configures this store to sync secrets using the HashiCorp Vault provider.
                       properties:
@@ -21997,6 +22093,102 @@ spec:
                         - auth
                         - module
                         - url
+                      type: object
+                    sigmaconfig:
+                      description: SigmaConfig configures this store to sync secrets using the Sigma Config provider
+                      properties:
+                        auth:
+                          description: Auth configures how the operator authenticates with the Sigma Config API.
+                          properties:
+                            apiKeySecretRef:
+                              description: APIKeySecretRef references the Kubernetes Secret key that holds a Sigma Config API key.
+                              properties:
+                                key:
+                                  description: |-
+                                    A key in the referenced Secret.
+                                    Some instances of this field may be defaulted, in others it may be required.
+                                  maxLength: 253
+                                  minLength: 1
+                                  pattern: ^[-._a-zA-Z0-9]+$
+                                  type: string
+                                name:
+                                  description: The name of the Secret resource being referred to.
+                                  maxLength: 253
+                                  minLength: 1
+                                  pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                                  type: string
+                                namespace:
+                                  description: |-
+                                    The namespace of the Secret resource being referred to.
+                                    Ignored if referent is not cluster-scoped, otherwise defaults to the namespace of the referent.
+                                  maxLength: 63
+                                  minLength: 1
+                                  pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                                  type: string
+                              type: object
+                          required:
+                            - apiKeySecretRef
+                          type: object
+                        caBundle:
+                          description: |-
+                            CABundle is a base64-encoded PEM CA certificate to trust in addition to the
+                            system roots, for a server behind a private CA. TLS verification is always on.
+                          format: byte
+                          type: string
+                        caProvider:
+                          description: CAProvider reads the CA certificate from a Secret or ConfigMap instead of CABundle.
+                          properties:
+                            key:
+                              description: The key where the CA certificate can be found in the Secret or ConfigMap.
+                              maxLength: 253
+                              minLength: 1
+                              pattern: ^[-._a-zA-Z0-9]+$
+                              type: string
+                            name:
+                              description: The name of the object located at the provider type.
+                              maxLength: 253
+                              minLength: 1
+                              pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                              type: string
+                            namespace:
+                              description: |-
+                                The namespace the Provider type is in.
+                                Can only be defined when used in a ClusterSecretStore.
+                              maxLength: 63
+                              minLength: 1
+                              pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                              type: string
+                            type:
+                              description: The type of provider to use such as "Secret", or "ConfigMap".
+                              enum:
+                                - Secret
+                                - ConfigMap
+                              type: string
+                          required:
+                            - name
+                            - type
+                          type: object
+                        environment:
+                          default: default
+                          description: Environment is the name of the Sigma Config environment whose values are read.
+                          type: string
+                        project:
+                          description: Project is the name of the Sigma Config project to read from. Matched exactly.
+                          minLength: 1
+                          type: string
+                        server:
+                          default: https://api.cloudtruth.io
+                          description: Server is the base URL of the Sigma Config API.
+                          pattern: ^https://
+                          type: string
+                        tag:
+                          description: |-
+                            Tag pins every read from this store to the values as they were at this tag
+                            in the environment. remoteRef.version overrides it for a single key.
+                          type: string
+                      required:
+                        - auth
+                        - project
                       type: object
                     vault:
                       description: Vault configures this store to sync secrets using the HashiCorp Vault provider.

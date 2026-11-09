@@ -61,6 +61,7 @@ replace (
 	github.com/external-secrets/external-secrets/providers/v1/scaleway => ./providers/v1/scaleway
 	github.com/external-secrets/external-secrets/providers/v1/secretserver => ./providers/v1/secretserver
 	github.com/external-secrets/external-secrets/providers/v1/senhasegura => ./providers/v1/senhasegura
+	github.com/external-secrets/external-secrets/providers/v1/sigmaconfig => ./providers/v1/sigmaconfig
 	github.com/external-secrets/external-secrets/providers/v1/vault => ./providers/v1/vault
 	github.com/external-secrets/external-secrets/providers/v1/volcengine => ./providers/v1/volcengine
 	github.com/external-secrets/external-secrets/providers/v1/webhook => ./providers/v1/webhook
@@ -125,6 +126,7 @@ require (
 	github.com/external-secrets/external-secrets/providers/v1/scaleway v0.0.0-20261021124231-db95fe1c087b
 	github.com/external-secrets/external-secrets/providers/v1/secretserver v0.0.0-20261021124231-db95fe1c087b
 	github.com/external-secrets/external-secrets/providers/v1/senhasegura v0.0.0-20261021124231-db95fe1c087b
+	github.com/external-secrets/external-secrets/providers/v1/sigmaconfig v0.0.0
 	github.com/external-secrets/external-secrets/providers/v1/vault v0.0.0-20261021124231-db95fe1c087b
 	github.com/external-secrets/external-secrets/providers/v1/volcengine v0.0.0-20261021124231-db95fe1c087b
 	github.com/external-secrets/external-secrets/providers/v1/webhook v0.0.0-20261021124231-db95fe1c087b
