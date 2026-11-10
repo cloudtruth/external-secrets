@@ -17,6 +17,7 @@ limitations under the License.
 package sigmaconfig
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -27,11 +28,17 @@ import (
 	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 	"github.com/external-secrets/external-secrets/providers/v1/sigmaconfig/api"
+	"github.com/external-secrets/external-secrets/runtime/esutils"
+	"github.com/external-secrets/external-secrets/runtime/find"
 )
 
 var _ esv1.SecretsClient = &secretsClient{}
 
-var errNotImplementedYet = errors.New("sigmaconfig: not implemented yet")
+var (
+	errFindTags = errors.New("sigmaconfig: find.tags is not supported (Sigma Config tags are points in time, not labels)")
+	errFindPath = errors.New("sigmaconfig: find.path is not supported (Sigma Config parameters have no paths)")
+	errFindName = errors.New("sigmaconfig: find needs name.regexp")
+)
 
 // secretsClient is a SecretsClient for one store. It is cheap: all state worth keeping lives in the
 // process-wide caches, keyed by server, API key hash, project, environment and tag.
@@ -200,14 +207,69 @@ func (c *secretsClient) Validate() (esv1.ValidationResult, error) {
 	return esv1.ValidationResultReady, nil
 }
 
-// GetSecretMap is delivered in M3.
-func (c *secretsClient) GetSecretMap(_ context.Context, _ esv1.ExternalSecretDataRemoteRef) (map[string][]byte, error) {
-	return nil, errNotImplementedYet
+// GetSecretMap reads one parameter (with property and version, as GetSecret) and expands its
+// JSON object value into one key per field. String fields are unquoted; other fields keep their
+// JSON text.
+func (c *secretsClient) GetSecretMap(ctx context.Context, ref esv1.ExternalSecretDataRemoteRef) (map[string][]byte, error) {
+	data, err := c.GetSecret(ctx, ref)
+	if err != nil {
+		return nil, err
+	}
+	trimmed := bytes.TrimSpace(data)
+	if len(trimmed) == 0 || trimmed[0] != '{' {
+		return nil, fmt.Errorf("sigmaconfig: parameter %q is not a JSON object, so it cannot be extracted", ref.Key)
+	}
+	out, err := esutils.JSONToSecretDataMap(trimmed)
+	if err != nil {
+		// The decoder's message can quote part of the value; keep it out.
+		return nil, fmt.Errorf("sigmaconfig: parameter %q is not a valid JSON object", ref.Key)
+	}
+	return out, nil
 }
 
-// GetAllSecrets is delivered in M3.
-func (c *secretsClient) GetAllSecrets(_ context.Context, _ esv1.ExternalSecretFind) (map[string][]byte, error) {
-	return nil, errNotImplementedYet
+// GetAllSecrets returns every parameter whose name matches find.name.regexp, under its own
+// name (unchanged: names may contain characters a Secret key cannot; use rewrite). Parameters
+// without a value are skipped. find.tags and find.path have no Sigma Config equivalent.
+func (c *secretsClient) GetAllSecrets(ctx context.Context, ref esv1.ExternalSecretFind) (map[string][]byte, error) {
+	if len(ref.Tags) > 0 {
+		return nil, errFindTags
+	}
+	if ref.Path != nil {
+		return nil, errFindPath
+	}
+	if ref.Name == nil {
+		return nil, errFindName
+	}
+	matcher, err := find.New(*ref.Name)
+	if err != nil {
+		return nil, fmt.Errorf("sigmaconfig: %w", err)
+	}
+
+	snap := c.bulk(ctx, c.tag)
+	if snap.err != nil {
+		if isTemplateError(snap.err) {
+			// There is no fallback for a bulk read: the API does not say which parameter failed,
+			// and returning a partial set would drop keys from the Secret.
+			return nil, fmt.Errorf(
+				"sigmaconfig: reading all parameters of project %q, environment %q failed: a parameter's value fails to evaluate in Sigma Config (template or validation error)",
+				c.project,
+				c.environment,
+			)
+		}
+		return nil, c.describe(snap.err, c.tag)
+	}
+
+	out := make(map[string][]byte)
+	for name, pv := range snap.values {
+		if !matcher.MatchName(name) || pv == nil || pv.value == nil {
+			continue
+		}
+		if pv.externalError != "" {
+			return nil, fmt.Errorf("sigmaconfig: parameter %q: its external value could not be pulled (error code %s)", name, pv.externalError)
+		}
+		out[name] = []byte(*pv.value)
+	}
+	return out, nil
 }
 
 // PushSecret is not supported: the provider never writes to Sigma Config.

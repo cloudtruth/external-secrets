@@ -33,6 +33,7 @@ import (
 	_ "github.com/external-secrets/external-secrets-e2e/suites/provider/cases/openbao"
 	_ "github.com/external-secrets/external-secrets-e2e/suites/provider/cases/scaleway"
 	_ "github.com/external-secrets/external-secrets-e2e/suites/provider/cases/secretserver"
+	_ "github.com/external-secrets/external-secrets-e2e/suites/provider/cases/sigmaconfig"
 	_ "github.com/external-secrets/external-secrets-e2e/suites/provider/cases/template"
 	_ "github.com/external-secrets/external-secrets-e2e/suites/provider/cases/vault"
 )
