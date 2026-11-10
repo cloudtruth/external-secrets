@@ -17,7 +17,6 @@ limitations under the License.
 package sigmaconfig
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"testing"
@@ -79,6 +78,13 @@ func TestValidateStore(t *testing.T) {
 			name:    "missing project",
 			store:   makeStore(esv1.SecretStoreKind, func(p *esv1.SigmaConfigProvider) { p.Project = "" }),
 			wantErr: errMissingProject,
+		},
+		{
+			name: "missing key selector",
+			store: makeStore(esv1.SecretStoreKind, func(p *esv1.SigmaConfigProvider) {
+				p.Auth.APIKeySecretRef.Name = ""
+			}),
+			wantErr: errMissingAPIKeyRef,
 		},
 		{
 			name:    "http server refused",
@@ -151,12 +157,5 @@ func TestProviderSpecSetsOnlySigmaConfig(t *testing.T) {
 	}
 	if _, ok := keys["sigmaconfig"]; !ok || len(keys) != 1 {
 		t.Fatalf("expected exactly the sigmaconfig key, got %s", raw)
-	}
-}
-
-func TestNewClientNotImplemented(t *testing.T) {
-	_, err := NewProvider().NewClient(context.Background(), makeStore(esv1.SecretStoreKind, nil), nil, "default")
-	if !errors.Is(err, errNotImplemented) {
-		t.Fatalf("expected errNotImplemented, got %v", err)
 	}
 }
