@@ -18,7 +18,9 @@ package sigmaconfig
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/pem"
+	"net/http"
 	"reflect"
 	"strings"
 	"testing"
@@ -89,6 +91,55 @@ func TestNewClientReadsKeyAndTrustsCABundle(t *testing.T) { // U-01, U-83
 	}
 	if h := f.requests()[0].header.Get("Authorization"); h != "Api-Key "+testAPIKey {
 		t.Fatalf("Authorization = %q", h)
+	}
+}
+
+// U-85: the fake server offers HTTP/2. The client must negotiate HTTP/1.1, because its
+// transport cannot read HTTP/2 frames (staging answered P-01 with an HTTP/2 SETTINGS frame).
+func TestNewClientNegotiatesHTTP1WithHTTP2Server(t *testing.T) {
+	resetSharedCaches(t)
+	f := newFakeAPI(t, defaultParams()...)
+	store := storeFor(f, func(s *esv1.SigmaConfigProvider) { s.CABundle = serverCAPEM(f) })
+
+	sc, err := NewProvider().NewClient(context.Background(), store, kubeWith(apiKeySecret()).Build(), "default")
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+	if _, err := sc.GetSecret(context.Background(), esv1.ExternalSecretDataRemoteRef{Key: "db_password"}); err != nil {
+		t.Fatalf("GetSecret against an HTTP/2-capable server: %v", err)
+	}
+	for _, r := range f.requests() {
+		if r.proto != "HTTP/1.1" {
+			t.Fatalf("request %s used %s, want HTTP/1.1", r.path, r.proto)
+		}
+	}
+}
+
+// U-85: with or without a CA, the client offers only http/1.1 in ALPN. Without a CA the
+// fake server's certificate is untrusted, so this checks the transport's TLS settings.
+func TestHTTPClientOffersOnlyHTTP1(t *testing.T) {
+	f := newFakeAPI(t)
+	for name, mutate := range map[string]func(*esv1.SigmaConfigProvider){
+		"no CA":     nil,
+		"CA bundle": func(s *esv1.SigmaConfigProvider) { s.CABundle = serverCAPEM(f) },
+	} {
+		t.Run(name, func(t *testing.T) {
+			spec := storeFor(f, mutate).Spec.Provider.SigmaConfig
+			hc, err := newHTTPClient(context.Background(), spec, esv1.SecretStoreKind, "default", kubeWith().Build())
+			if err != nil {
+				t.Fatalf("newHTTPClient: %v", err)
+			}
+			tr, ok := hc.Transport.(*http.Transport)
+			if !ok || tr.TLSClientConfig == nil {
+				t.Fatal("transport has no TLS config")
+			}
+			if got := tr.TLSClientConfig.NextProtos; !reflect.DeepEqual(got, []string{"http/1.1"}) {
+				t.Fatalf("ALPN offers %v, want [http/1.1]", got)
+			}
+			if tr.TLSClientConfig.MinVersion != tls.VersionTLS12 {
+				t.Fatalf("MinVersion = %x, want TLS 1.2", tr.TLSClientConfig.MinVersion)
+			}
+		})
 	}
 }
 

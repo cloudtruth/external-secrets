@@ -145,6 +145,10 @@ func newHTTPClient(ctx context.Context, spec *esv1.SigmaConfigProvider, storeKin
 	if err != nil {
 		return nil, fmt.Errorf("sigmaconfig: loading the CA certificate: %w", err)
 	}
+	// The cloned default transport keeps "h2" in its ALPN list even though HTTP/2 is turned
+	// off on it, so an HTTP/2 server would answer in a protocol this transport cannot read.
+	// Offer only HTTP/1.1.
+	tlsConfig := &tls.Config{MinVersion: tls.VersionTLS12, NextProtos: []string{"http/1.1"}}
 	if len(ca) > 0 {
 		pool, err := x509.SystemCertPool()
 		if err != nil || pool == nil {
@@ -153,8 +157,9 @@ func newHTTPClient(ctx context.Context, spec *esv1.SigmaConfigProvider, storeKin
 		if !pool.AppendCertsFromPEM(ca) {
 			return nil, errors.New("sigmaconfig: the CA certificate is not valid PEM")
 		}
-		transport.TLSClientConfig = &tls.Config{RootCAs: pool, MinVersion: tls.VersionTLS12}
+		tlsConfig.RootCAs = pool
 	}
+	transport.TLSClientConfig = tlsConfig
 	return &http.Client{Transport: transport, Timeout: requestTimeout}, nil
 }
 

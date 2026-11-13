@@ -59,6 +59,7 @@ type recorded struct {
 	path   string
 	query  url.Values
 	header http.Header
+	proto  string
 }
 
 // fakeAPI plays the parts of the Sigma Config API the provider uses.
@@ -88,6 +89,8 @@ func newFakeAPI(t *testing.T, params ...fakeParam) *fakeAPI {
 	f.srv = httptest.NewUnstartedServer(http.HandlerFunc(f.serve))
 	// Silence handshake errors from tests that check an untrusted server is refused.
 	f.srv.Config.ErrorLog = log.New(io.Discard, "", 0)
+	// Like the real API, offer HTTP/2 to clients that ask for it.
+	f.srv.EnableHTTP2 = true
 	f.srv.StartTLS()
 	t.Cleanup(f.srv.Close)
 	return f
@@ -111,7 +114,7 @@ func (f *fakeAPI) count(pathPrefix string) int {
 
 func (f *fakeAPI) serve(w http.ResponseWriter, r *http.Request) {
 	f.mu.Lock()
-	f.reqs = append(f.reqs, recorded{method: r.Method, path: r.URL.Path, query: r.URL.Query(), header: r.Header.Clone()})
+	f.reqs = append(f.reqs, recorded{method: r.Method, path: r.URL.Path, query: r.URL.Query(), header: r.Header.Clone(), proto: r.Proto})
 	n := len(f.reqs)
 	override := f.override
 	f.mu.Unlock()
