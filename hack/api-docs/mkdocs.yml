@@ -168,6 +168,7 @@ nav:
       - ngrok: provider/ngrok.md
       - Devolutions Server: provider/devolutions-server.md
       - Nebius SecretStash: provider/nebius-mysterybox.md
+      - Sigma Config: provider/sigmaconfig.md
   - Examples:
       - FluxCD: examples/gitops-using-fluxcd.md
       - Anchore Engine: examples/anchore-engine-credentials.md

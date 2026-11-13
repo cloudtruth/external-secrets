@@ -1,0 +1,14 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: stripe
+spec:
+  refreshInterval: 5m
+  secretStoreRef:
+    name: payments-production
+    kind: SecretStore
+  target:
+    name: stripe
+  dataFrom:
+    - extract:
+        key: stripe  # one Secret key per field of the JSON object

@@ -1,0 +1,15 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: database
+spec:
+  refreshInterval: 5m
+  secretStoreRef:
+    name: payments-production
+    kind: SecretStore
+  target:
+    name: database
+  dataFrom:
+    - find:
+        name:
+          regexp: "^db_"  # every parameter whose name matches
