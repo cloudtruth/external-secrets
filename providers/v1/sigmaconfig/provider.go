@@ -17,7 +17,7 @@ limitations under the License.
 // Package sigmaconfig implements a read-only Provider for [Sigma Config]
 // (formerly CloudTruth).
 //
-// [Sigma Config]: https://cloudtruth.com/
+// [Sigma Config]: https://sigma-automate.com/config
 package sigmaconfig
 
 import (

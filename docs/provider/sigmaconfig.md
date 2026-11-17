@@ -1,5 +1,4 @@
-<!-- TODO(M4): link "Sigma Config" to the product page once Sigma confirms the URL. -->
-Sync parameters from Sigma Config (formerly CloudTruth) to Kubernetes Secrets. Sigma Config stores configuration and secrets in projects and environments, with inheritance, templates and tags. The `sigmaconfig` provider reads parameters, secret or not, and writes them into Kubernetes Secrets.
+Sync parameters from [Sigma Config](https://sigma-automate.com/config) (formerly CloudTruth) to Kubernetes Secrets. Sigma Config stores configuration and secrets in projects and environments, with inheritance, templates and tags. The `sigmaconfig` provider reads parameters, secret or not, and writes them into Kubernetes Secrets.
 
 The provider is read-only: it reads from Sigma Config and never writes to it. `PushSecret` is not supported.
 
