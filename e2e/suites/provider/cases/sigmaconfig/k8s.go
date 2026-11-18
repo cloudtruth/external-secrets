@@ -23,10 +23,6 @@ import (
 	"strings"
 	"time"
 
-	//nolint
-	. "github.com/onsi/ginkgo/v2"
-	//nolint
-	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,6 +32,11 @@ import (
 	"github.com/external-secrets/external-secrets-e2e/framework"
 	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
+
+	//nolint
+	. "github.com/onsi/ginkgo/v2"
+	//nolint
+	. "github.com/onsi/gomega"
 )
 
 const (
@@ -74,11 +75,11 @@ type storeOpts struct {
 
 func createStore(f *framework.Framework, cfg *config, o storeOpts) {
 	mustCreate(f, &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{Name: keySecretName, Namespace: f.Namespace.Name},
+		Name: keySecretName, Namespace: f.Namespace.Name,
 		StringData: map[string]string{keySecretKey: o.apiKey},
 	})
 	mustCreate(f, &esv1.SecretStore{
-		ObjectMeta: metav1.ObjectMeta{Name: storeName, Namespace: f.Namespace.Name},
+		Name: storeName, Namespace: f.Namespace.Name,
 		Spec: esv1.SecretStoreSpec{Provider: &esv1.SecretStoreProvider{SigmaConfig: &esv1.SigmaConfigProvider{
 			Server:      cfg.server,
 			Project:     o.project,
@@ -99,7 +100,7 @@ func createExternalSecret(f *framework.Framework, data []esv1.ExternalSecretData
 		refresh = time.Hour
 	}
 	mustCreate(f, &esv1.ExternalSecret{
-		ObjectMeta: metav1.ObjectMeta{Name: esName, Namespace: f.Namespace.Name},
+		Name: esName, Namespace: f.Namespace.Name,
 		Spec: esv1.ExternalSecretSpec{
 			RefreshInterval: &metav1.Duration{Duration: refresh},
 			SecretStoreRef:  esv1.SecretStoreRef{Name: storeName, Kind: esv1.SecretStoreKind},
@@ -200,7 +201,8 @@ func controllerLogContains(f *framework.Framework, since time.Time, parts ...str
 		return false
 	}
 	sinceTime := metav1.NewTime(since)
-	for _, pod := range pods.Items {
+	for i := range pods.Items {
+		pod := &pods.Items[i]
 		for _, con := range pod.Spec.Containers {
 			if logContains(ctx, f, pod.Name, con.Name, &sinceTime, parts) {
 				return true

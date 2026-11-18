@@ -65,7 +65,7 @@ type value struct {
 	EnvironmentName string `json:"environment_name"`
 }
 
-func (c *apiClient) do(ctx context.Context, method, path string, q url.Values, body any, out any) error {
+func (c *apiClient) do(ctx context.Context, method, path string, q url.Values, body, out any) error {
 	u := c.server + path
 	if len(q) > 0 {
 		u += "?" + q.Encode()

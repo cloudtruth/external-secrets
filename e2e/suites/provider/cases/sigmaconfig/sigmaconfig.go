@@ -28,13 +28,13 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/external-secrets/external-secrets-e2e/framework"
+	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
+
 	//nolint
 	. "github.com/onsi/ginkgo/v2"
 	//nolint
 	. "github.com/onsi/gomega"
-
-	"github.com/external-secrets/external-secrets-e2e/framework"
-	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 )
 
 const (
@@ -193,7 +193,7 @@ var _ = Describe("[sigmaconfig]", Label("sigmaconfig"), Ordered, func() {
 
 	It("P-14: an integer parameter arrives as the exact string", func() {
 		want := expect(payments, production, "", "max_connections")
-		Expect(regexp.MustCompile(`^-?[0-9]+$`).MatchString(*want)).To(BeTrue(), "seed: max_connections is not an integer string")
+		Expect(regexp.MustCompile(`^-?\d+$`).MatchString(*want)).To(BeTrue(), "seed: max_connections is not an integer string")
 		createStore(f, cfg, storeOpts{project: payments, environment: production, apiKey: cfg.apiKey})
 		createExternalSecret(f, []esv1.ExternalSecretData{dataRef("value", "max_connections", "", "")}, nil, "", 0)
 		waitForSecret(f, syncTimeout, "max_connections", func(d map[string][]byte) bool { return equalTo(want)(d["value"]) })
