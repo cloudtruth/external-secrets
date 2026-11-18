@@ -28,8 +28,10 @@ import (
 	//nolint
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/external-secrets/external-secrets-e2e/framework"
 	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
@@ -45,7 +47,22 @@ const (
 
 	syncTimeout = 2 * time.Minute
 	poll        = 2 * time.Second
+	// createTimeout covers ESO's admission webhooks starting up: right after a fresh install
+	// they can reject requests until their CA certificate is in place.
+	createTimeout = time.Minute
 )
+
+// mustCreate creates obj, retrying while the API server refuses it (for example while the
+// webhooks are not ready yet). AlreadyExists means an earlier attempt went through.
+func mustCreate(f *framework.Framework, obj client.Object) {
+	Eventually(func() error {
+		err := f.CRClient.Create(GinkgoT().Context(), obj)
+		if apierrors.IsAlreadyExists(err) {
+			return nil
+		}
+		return err
+	}, createTimeout, poll).Should(Succeed(), "creating %T %q", obj, obj.GetName())
+}
 
 // storeOpts describes the SecretStore a case needs.
 type storeOpts struct {
@@ -56,12 +73,11 @@ type storeOpts struct {
 }
 
 func createStore(f *framework.Framework, cfg *config, o storeOpts) {
-	ctx := GinkgoT().Context()
-	Expect(f.CRClient.Create(ctx, &corev1.Secret{
+	mustCreate(f, &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{Name: keySecretName, Namespace: f.Namespace.Name},
 		StringData: map[string]string{keySecretKey: o.apiKey},
-	})).To(Succeed())
-	Expect(f.CRClient.Create(ctx, &esv1.SecretStore{
+	})
+	mustCreate(f, &esv1.SecretStore{
 		ObjectMeta: metav1.ObjectMeta{Name: storeName, Namespace: f.Namespace.Name},
 		Spec: esv1.SecretStoreSpec{Provider: &esv1.SecretStoreProvider{SigmaConfig: &esv1.SigmaConfigProvider{
 			Server:      cfg.server,
@@ -72,7 +88,7 @@ func createStore(f *framework.Framework, cfg *config, o storeOpts) {
 				APIKeySecretRef: esmeta.SecretKeySelector{Name: keySecretName, Key: keySecretKey},
 			},
 		}}},
-	})).To(Succeed())
+	})
 }
 
 func createExternalSecret(f *framework.Framework, data []esv1.ExternalSecretData, dataFrom []esv1.ExternalSecretDataFromRemoteRef, policy esv1.ExternalSecretDeletionPolicy, refresh time.Duration) {
@@ -82,7 +98,7 @@ func createExternalSecret(f *framework.Framework, data []esv1.ExternalSecretData
 	if refresh == 0 {
 		refresh = time.Hour
 	}
-	Expect(f.CRClient.Create(GinkgoT().Context(), &esv1.ExternalSecret{
+	mustCreate(f, &esv1.ExternalSecret{
 		ObjectMeta: metav1.ObjectMeta{Name: esName, Namespace: f.Namespace.Name},
 		Spec: esv1.ExternalSecretSpec{
 			RefreshInterval: &metav1.Duration{Duration: refresh},
@@ -91,7 +107,7 @@ func createExternalSecret(f *framework.Framework, data []esv1.ExternalSecretData
 			Data:            data,
 			DataFrom:        dataFrom,
 		},
-	})).To(Succeed())
+	})
 }
 
 func dataRef(secretKey, key, property, version string) esv1.ExternalSecretData {
