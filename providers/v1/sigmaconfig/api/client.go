@@ -43,6 +43,9 @@ const (
 	PageSize = 1000
 	// maxBodyBytes bounds how much of a response is read.
 	maxBodyBytes = 64 << 20
+	// MaxPages bounds one parameter list: 100 pages of 1,000 is far beyond any real project,
+	// and it stops a looping or endless "next" from spending the org's request budget.
+	MaxPages = 100
 )
 
 var (
@@ -50,6 +53,8 @@ var (
 	ErrInsecureServer = errors.New("server must be an https:// URL")
 	// ErrUnexpectedNext is returned when a "next" page link points away from the configured server.
 	ErrUnexpectedNext = errors.New("pagination link points to a different host")
+	// ErrPagination is returned when "next" repeats a page or the list runs past MaxPages.
+	ErrPagination = errors.New("parameter list did not end (a page repeated, or more than 100 pages)")
 )
 
 // Observer records one API call outcome (wired to metrics.ObserveAPICall by the provider).
@@ -93,6 +98,11 @@ func New(opts Options) (*Client, error) {
 	if c.http == nil {
 		c.http = &http.Client{Timeout: 30 * time.Second}
 	}
+	// Never follow a redirect: Go keeps the Authorization header on a same-host redirect,
+	// even from https to http. The 3xx is returned as is and reported as an API error.
+	hc := *c.http
+	hc.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+	c.http = &hc
 	if c.observe == nil {
 		c.observe = func(string, error) {}
 	}
@@ -135,7 +145,12 @@ func (c *Client) ListParameters(ctx context.Context, projectID, environment, tag
 	next := c.endpoint("/api/v1/projects/"+url.PathEscape(projectID)+"/parameters/", q)
 
 	var out []Parameter
+	seen := map[string]bool{}
 	for next != "" {
+		if seen[next] || len(seen) >= MaxPages {
+			return nil, ErrPagination
+		}
+		seen[next] = true
 		var page listResponse[Parameter]
 		if err := c.get(ctx, CallParameterList, next, &page); err != nil {
 			return nil, err

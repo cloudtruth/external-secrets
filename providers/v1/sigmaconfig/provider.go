@@ -49,6 +49,10 @@ var (
 	errInsecureServer  = errors.New("sigmaconfig: server must be an https:// URL")
 	// errMissingAPIKeyRef: the CRD requires the field, but name and key can still be empty strings.
 	errMissingAPIKeyRef = errors.New("sigmaconfig: auth.apiKeySecretRef needs both name and key")
+
+	errCABundleAndProvider      = errors.New("sigmaconfig: set caBundle or caProvider, not both")
+	errCAProviderNeedsNamespace = errors.New("sigmaconfig: caProvider.namespace is required for a ClusterSecretStore")
+	errCAProviderNamespace      = errors.New("sigmaconfig: caProvider.namespace must be empty for a SecretStore")
 )
 
 // Provider is the Sigma Config provider.
@@ -193,7 +197,27 @@ func (p *Provider) ValidateStore(store esv1.GenericStore) (admission.Warnings, e
 	if err := esutils.ValidateSecretSelector(store, spec.Auth.APIKeySecretRef); err != nil {
 		return nil, fmt.Errorf("sigmaconfig: invalid auth.apiKeySecretRef: %w", err)
 	}
+	if err := validateCA(store.GetKind(), spec); err != nil {
+		return nil, err
+	}
 	return nil, nil
+}
+
+// validateCA rejects at admission what FetchCACertFromSource would only reject at runtime.
+func validateCA(storeKind string, spec *esv1.SigmaConfigProvider) error {
+	if spec.CAProvider == nil {
+		return nil
+	}
+	if len(spec.CABundle) > 0 {
+		return errCABundleAndProvider
+	}
+	if storeKind == esv1.ClusterSecretStoreKind && spec.CAProvider.Namespace == nil {
+		return errCAProviderNeedsNamespace
+	}
+	if storeKind == esv1.SecretStoreKind && spec.CAProvider.Namespace != nil {
+		return errCAProviderNamespace
+	}
+	return nil
 }
 
 func getProvider(store esv1.GenericStore) (*esv1.SigmaConfigProvider, error) {

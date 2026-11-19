@@ -126,7 +126,7 @@ require (
 	github.com/external-secrets/external-secrets/providers/v1/scaleway v0.0.0-20261109082346-f2947730475c
 	github.com/external-secrets/external-secrets/providers/v1/secretserver v0.0.0-20261109082346-f2947730475c
 	github.com/external-secrets/external-secrets/providers/v1/senhasegura v0.0.0-20261109082346-f2947730475c
-	github.com/external-secrets/external-secrets/providers/v1/sigmaconfig v0.0.0
+	github.com/external-secrets/external-secrets/providers/v1/sigmaconfig v0.0.0-20261109082346-f2947730475c
 	github.com/external-secrets/external-secrets/providers/v1/vault v0.0.0-20261109082346-f2947730475c
 	github.com/external-secrets/external-secrets/providers/v1/volcengine v0.0.0-20261109082346-f2947730475c
 	github.com/external-secrets/external-secrets/providers/v1/webhook v0.0.0-20261109082346-f2947730475c

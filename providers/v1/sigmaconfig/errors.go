@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/external-secrets/external-secrets/providers/v1/sigmaconfig/api"
 )
@@ -50,18 +51,41 @@ func (c *secretsClient) describe(err error, tag string) error {
 	case ae.IsTagNotFound():
 		return fmt.Errorf("sigmaconfig: tag %q not found in environment %q", tag, c.environment)
 	case ae.StatusCode == http.StatusTooManyRequests:
-		retry := ae.RetryAfter
-		if retry == "" {
-			retry = "not given"
+		retry := "not given"
+		if ae.RetryAfter != "" {
+			retry = safeToken(ae.RetryAfter)
 		}
 		return fmt.Errorf("sigmaconfig: the organization's API rate limit is spent (HTTP 429, Retry-After: %s); not retrying now", retry)
 	case ae.StatusCode == http.StatusBadRequest && !ae.IsTemplateError():
-		return fmt.Errorf("sigmaconfig: request rejected (HTTP 400: %s); this is a provider bug, please report it", ae.Detail)
-	case ae.NotJSON:
-		return fmt.Errorf("sigmaconfig: %s returned HTTP %d %s", ae.Call, ae.StatusCode, http.StatusText(ae.StatusCode))
+		// The server's message is left out: a validation message can quote a value.
+		return fmt.Errorf("sigmaconfig: %s request rejected (HTTP 400); this is a provider bug, please report it", ae.Call)
 	default:
-		return fmt.Errorf("sigmaconfig: %w", ae)
+		// Status only. The API's own text is never copied into an error, because it ends up in
+		// controller logs and the ExternalSecret status.
+		return fmt.Errorf("sigmaconfig: %s returned HTTP %d %s", ae.Call, ae.StatusCode, http.StatusText(ae.StatusCode))
 	}
+}
+
+// externalPullError reports a value Sigma Config could not pull from an external store.
+func externalPullError(name, code string) error {
+	return fmt.Errorf("sigmaconfig: parameter %q: its external value could not be pulled (error code %s)", name, safeToken(code))
+}
+
+// safeToken passes a short server-supplied token (an error code, a Retry-After value) through
+// only if it is plain: letters, digits, space and ".,:-_+". Anything else, or anything long, is
+// replaced, so server text cannot inject lines or other content into logs and status.
+func safeToken(s string) string {
+	const maxLen = 64
+	if s == "" || len(s) > maxLen {
+		return "(unrecognized)"
+	}
+	for _, r := range s {
+		ok := (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || strings.ContainsRune(" .,:-_+", r)
+		if !ok {
+			return "(unrecognized)"
+		}
+	}
+	return s
 }
 
 // templateError reports a parameter whose template fails to evaluate. The API's messages are

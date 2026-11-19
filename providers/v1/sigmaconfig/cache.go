@@ -76,9 +76,13 @@ func newSnapshotCache(now func() time.Time) *snapshotCache {
 	}
 }
 
+// errFillPanicked is what callers waiting on a fill get when that fill panicked.
+var errFillPanicked = errors.New("reading parameters failed unexpectedly; it will be retried on the next reconcile")
+
 // get returns the cached snapshot for key, or calls fill once (across concurrent callers)
-// and caches its result for cacheTTL.
-func (c *snapshotCache) get(key string, fill func() *snapshot) *snapshot {
+// and caches its result for cacheTTL. A caller waiting on another caller's fill stops
+// waiting when its own ctx ends.
+func (c *snapshotCache) get(ctx context.Context, key string, fill func() *snapshot) *snapshot {
 	c.mu.Lock()
 	if e, ok := c.entries[key]; ok && c.now().Before(e.expires) {
 		c.mu.Unlock()
@@ -86,17 +90,26 @@ func (c *snapshotCache) get(key string, fill func() *snapshot) *snapshot {
 	}
 	if p, ok := c.pending[key]; ok {
 		c.mu.Unlock()
-		<-p.done
-		return p.snap
+		select {
+		case <-p.done:
+			return p.snap
+		case <-ctx.Done():
+			return &snapshot{err: ctx.Err()}
+		}
 	}
 	p := &inflight{done: make(chan struct{})}
 	c.pending[key] = p
 	c.mu.Unlock()
 
+	// This runs even if fill panics: waiters are released with an error, nothing is cached,
+	// the lock is not held when the panic carries on, and the next call fetches again.
 	defer func() {
+		if p.snap == nil {
+			p.snap = &snapshot{err: errFillPanicked}
+		}
 		c.mu.Lock()
 		// A canceled caller's error says nothing about the API; don't hand it to the next reconcile.
-		if !isContextError(p.snap.err) {
+		if !isContextError(p.snap.err) && !errors.Is(p.snap.err, errFillPanicked) {
 			now := c.now()
 			c.evictLocked(now)
 			c.entries[key] = &cacheEntry{snap: p.snap, expires: now.Add(cacheTTL), added: now}

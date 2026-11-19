@@ -86,6 +86,7 @@ Recommendations:
 - Use `refreshInterval: 5m` or longer.
 - Intervals shorter than 30 seconds receive cached values.
 - Share one store per project and environment rather than creating many.
+- On a store shared by several teams, anyone who can create an ExternalSecret against it can spend the organization's budget, for example with many different `remoteRef.version` tags, each of which costs its own fetch. Limit who can use a `ClusterSecretStore` with its `conditions` (namespace selectors), and prefer one namespaced `SecretStore` per team.
 
 ## Errors
 

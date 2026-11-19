@@ -114,6 +114,42 @@ func TestValidateStore(t *testing.T) {
 				p.Auth.APIKeySecretRef.Namespace = new("eso")
 			}),
 		},
+		{
+			name: "caProvider on a namespaced store",
+			store: makeStore(esv1.SecretStoreKind, func(p *esv1.SigmaConfigProvider) {
+				p.CAProvider = &esv1.CAProvider{Type: esv1.CAProviderTypeSecret, Name: "ca", Key: "ca.crt"}
+			}),
+		},
+		{
+			name: "caProvider on a cluster store with namespace",
+			store: makeStore(esv1.ClusterSecretStoreKind, func(p *esv1.SigmaConfigProvider) {
+				p.Auth.APIKeySecretRef.Namespace = new("eso")
+				p.CAProvider = &esv1.CAProvider{Type: esv1.CAProviderTypeSecret, Name: "ca", Key: "ca.crt", Namespace: new("eso")}
+			}),
+		},
+		{
+			name: "caProvider namespace on a namespaced store",
+			store: makeStore(esv1.SecretStoreKind, func(p *esv1.SigmaConfigProvider) {
+				p.CAProvider = &esv1.CAProvider{Type: esv1.CAProviderTypeSecret, Name: "ca", Key: "ca.crt", Namespace: new("other")}
+			}),
+			wantErr: errCAProviderNamespace,
+		},
+		{
+			name: "caProvider without namespace on a cluster store",
+			store: makeStore(esv1.ClusterSecretStoreKind, func(p *esv1.SigmaConfigProvider) {
+				p.Auth.APIKeySecretRef.Namespace = new("eso")
+				p.CAProvider = &esv1.CAProvider{Type: esv1.CAProviderTypeSecret, Name: "ca", Key: "ca.crt"}
+			}),
+			wantErr: errCAProviderNeedsNamespace,
+		},
+		{
+			name: "caBundle and caProvider together",
+			store: makeStore(esv1.SecretStoreKind, func(p *esv1.SigmaConfigProvider) {
+				p.CABundle = []byte("pem")
+				p.CAProvider = &esv1.CAProvider{Type: esv1.CAProviderTypeSecret, Name: "ca", Key: "ca.crt"}
+			}),
+			wantErr: errCABundleAndProvider,
+		},
 	}
 
 	for _, tc := range tests {

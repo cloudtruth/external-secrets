@@ -78,15 +78,10 @@ type Error struct {
 	RetryAfter string
 }
 
+// Error gives the call and status only. Detail and RetryAfter are server text, kept for
+// matching; they are left out so they never reach logs unchecked.
 func (e *Error) Error() string {
-	msg := fmt.Sprintf("sigma config API %s: HTTP %d", e.Call, e.StatusCode)
-	if e.Detail != "" {
-		msg += ": " + e.Detail
-	}
-	if e.RetryAfter != "" {
-		msg += " (Retry-After: " + e.RetryAfter + ")"
-	}
-	return msg
+	return fmt.Sprintf("sigma config API %s: HTTP %d", e.Call, e.StatusCode)
 }
 
 // IsTemplateError reports a 400 whose body is a JSON list, which is how the API

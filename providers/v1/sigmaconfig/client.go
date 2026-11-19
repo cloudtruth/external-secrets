@@ -67,11 +67,16 @@ func (c *secretsClient) GetSecret(ctx context.Context, ref esv1.ExternalSecretDa
 	if err != nil {
 		return nil, err
 	}
-	if pv == nil || pv.value == nil {
+	if pv == nil {
 		return nil, esv1.NoSecretErr
 	}
+	// A failed external pull can come with a null value. Report it before treating null as
+	// "no secret", so a temporary failure upstream never deletes the user's Secret.
 	if pv.externalError != "" {
-		return nil, fmt.Errorf("sigmaconfig: parameter %q: its external value could not be pulled (error code %s)", ref.Key, pv.externalError)
+		return nil, externalPullError(ref.Key, pv.externalError)
+	}
+	if pv.value == nil {
+		return nil, esv1.NoSecretErr
 	}
 
 	value := *pv.value
@@ -111,12 +116,12 @@ func (c *secretsClient) lookup(ctx context.Context, tag, name string) (*paramVal
 
 func (c *secretsClient) bulk(ctx context.Context, tag string) *snapshot {
 	key := cacheKey("bulk", c.server, c.keyHash, c.project, c.environment, tag)
-	return c.snapshots.get(key, func() *snapshot { return c.fetch(ctx, tag, "") })
+	return c.snapshots.get(ctx, key, func() *snapshot { return c.fetch(ctx, tag, "") })
 }
 
 func (c *secretsClient) byName(ctx context.Context, tag, name string) *snapshot {
 	key := cacheKey("name", c.server, c.keyHash, c.project, c.environment, tag, name)
-	return c.snapshots.get(key, func() *snapshot { return c.fetch(ctx, tag, name) })
+	return c.snapshots.get(ctx, key, func() *snapshot { return c.fetch(ctx, tag, name) })
 }
 
 // fetch lists parameters (all, or one by name) and indexes their values by name.
@@ -261,11 +266,15 @@ func (c *secretsClient) GetAllSecrets(ctx context.Context, ref esv1.ExternalSecr
 
 	out := make(map[string][]byte)
 	for name, pv := range snap.values {
-		if !matcher.MatchName(name) || pv == nil || pv.value == nil {
+		if !matcher.MatchName(name) || pv == nil {
 			continue
 		}
+		// Checked before the null-value skip: a failed pull must fail the sync, not drop the key.
 		if pv.externalError != "" {
-			return nil, fmt.Errorf("sigmaconfig: parameter %q: its external value could not be pulled (error code %s)", name, pv.externalError)
+			return nil, externalPullError(name, pv.externalError)
+		}
+		if pv.value == nil {
+			continue
 		}
 		out[name] = []byte(*pv.value)
 	}
