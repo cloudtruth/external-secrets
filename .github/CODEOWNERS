@@ -61,6 +61,7 @@ providers/v1/pulumi/                   @external-secrets/provider-pulumi-reviewe
 providers/v1/scaleway/                 @external-secrets/provider-scaleway-reviewers
 providers/v1/secretserver/             @external-secrets/provider-secretserver-reviewers
 providers/v1/senhasegura/              @external-secrets/provider-senhasegura-reviewers
+providers/v1/sigmaconfig/              @external-secrets/provider-sigmaconfig-reviewers
 providers/v1/vault/                    @external-secrets/provider-vault-reviewers
 providers/v1/webhook/                  @external-secrets/provider-webhook-reviewers
 providers/v1/yandex/                   @external-secrets/provider-yandex-reviewers

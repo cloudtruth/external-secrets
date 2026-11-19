@@ -2305,6 +2305,7 @@ string
 <a href="#external-secrets.io/v1.OvhClientMTLS">OvhClientMTLS</a>, 
 <a href="#external-secrets.io/v1.PassboltProvider">PassboltProvider</a>, 
 <a href="#external-secrets.io/v1.SecretServerProvider">SecretServerProvider</a>, 
+<a href="#external-secrets.io/v1.SigmaConfigProvider">SigmaConfigProvider</a>, 
 <a href="#external-secrets.io/v1.VaultProvider">VaultProvider</a>)
 </p>
 <p>
@@ -12265,6 +12266,20 @@ OpenBaoProvider
 <p>OpenBao configures this store to sync secrets using the OpenBao provider.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>sigmaconfig</code></br>
+<em>
+<a href="#external-secrets.io/v1.SigmaConfigProvider">
+SigmaConfigProvider
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>SigmaConfig configures this store to sync secrets using the Sigma Config provider</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="external-secrets.io/v1.SecretStoreRef">SecretStoreRef
@@ -12807,6 +12822,146 @@ the esoNamespace, esoStoreName, and esoStoreKind tags.</p>
 session tags.</p>
 </td>
 </tr></tbody>
+</table>
+<h3 id="external-secrets.io/v1.SigmaConfigAuth">SigmaConfigAuth
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#external-secrets.io/v1.SigmaConfigProvider">SigmaConfigProvider</a>)
+</p>
+<p>
+<p>SigmaConfigAuth contains the credentials for the Sigma Config API.</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>apiKeySecretRef</code></br>
+<em>
+<a href="https://pkg.go.dev/github.com/external-secrets/external-secrets/apis/meta/v1#SecretKeySelector">
+External Secrets meta/v1.SecretKeySelector
+</a>
+</em>
+</td>
+<td>
+<p>APIKeySecretRef references the Kubernetes Secret key that holds a Sigma Config API key.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="external-secrets.io/v1.SigmaConfigProvider">SigmaConfigProvider
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#external-secrets.io/v1.SecretStoreProvider">SecretStoreProvider</a>)
+</p>
+<p>
+<p>SigmaConfigProvider configures a store to read parameters from one Sigma Config
+(formerly CloudTruth) project in one environment, optionally pinned to a tag.</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>server</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Server is the base URL of the Sigma Config API.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>project</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Project is the name of the Sigma Config project to read from. Matched exactly.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>environment</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Environment is the name of the Sigma Config environment whose values are read.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>tag</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Tag pins every read from this store to the values as they were at this tag
+in the environment. remoteRef.version overrides it for a single key.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>auth</code></br>
+<em>
+<a href="#external-secrets.io/v1.SigmaConfigAuth">
+SigmaConfigAuth
+</a>
+</em>
+</td>
+<td>
+<p>Auth configures how the operator authenticates with the Sigma Config API.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>caBundle</code></br>
+<em>
+[]byte
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>CABundle is a base64-encoded PEM CA certificate to trust in addition to the
+system roots, for a server behind a private CA. TLS verification is always on.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>caProvider</code></br>
+<em>
+<a href="#external-secrets.io/v1.CAProvider">
+CAProvider
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>CAProvider reads the CA certificate from a Secret or ConfigMap instead of CABundle.</p>
+</td>
+</tr>
+</tbody>
 </table>
 <h3 id="external-secrets.io/v1.StoreGeneratorSourceRef">StoreGeneratorSourceRef
 </h3>

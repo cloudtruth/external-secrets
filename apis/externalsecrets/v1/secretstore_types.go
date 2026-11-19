@@ -285,6 +285,10 @@ type SecretStoreProvider struct {
 	// OpenBao configures this store to sync secrets using the OpenBao provider.
 	// +optional
 	OpenBao *OpenBaoProvider `json:"openBao,omitempty"`
+
+	// SigmaConfig configures this store to sync secrets using the Sigma Config provider
+	// +optional
+	SigmaConfig *SigmaConfigProvider `json:"sigmaconfig,omitempty"`
 }
 
 // CAProviderType defines the type of provider for certificate authority.

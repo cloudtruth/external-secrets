@@ -110,6 +110,7 @@ The following table describes the stability level of each provider and who's res
 | [Scaleway](https://external-secrets.io/latest/provider/scaleway)                                              |     alpha | [@azert9](https://github.com/azert9/)                                                               |
 | [SecretServer](https://external-secrets.io/latest/provider/secretserver)                                      |      beta | [@gmurugezan](https://github.com/gmurugezan)                                                    |
 | [Senhasegura DevOps Secrets Management (DSM)](https://external-secrets.io/latest/provider/senhasegura-dsm)    |     alpha | [@lfraga](https://github.com/lfraga)                                                                |
+| [Sigma Config](https://external-secrets.io/latest/provider/sigmaconfig)                                       |     alpha | [@Ayodehi](https://github.com/Ayodehi) [@AbsolutOD](https://github.com/AbsolutOD)                   |
 | [Volcengine](https://external-secrets.io/latest/provider/volcengine)                                          |     alpha | [@kevinyancn](https://github.com/kevinyancn)                                                        |
 | [Yandex Certificate Manager](https://external-secrets.io/latest/provider/yandex-certificate-manager/)         |     alpha | [@AndreyZamyslov](https://github.com/AndreyZamyslov) [@knelasevero](https://github.com/knelasevero) |
 | [Yandex Lockbox](https://external-secrets.io/latest/provider/yandex-lockbox/)                                 |     alpha | [@AndreyZamyslov](https://github.com/AndreyZamyslov) [@knelasevero](https://github.com/knelasevero) |
@@ -160,6 +161,7 @@ The following table show the support for features across different providers.
 | Scaleway                         |      x       |      x       |                      |            x            |        x         |      x      |              x              |
 | SecretServer                     |              |              |                      |            x            |        x         |      x      |              x              |
 | Senhasegura DSM                  |              |              |                      |            x            |        x         |             |              x              |
+| Sigma Config                     |      x       |              |                      |            x            |        x         |             |              x              |
 | Volcengine                       |              |              |                      |            x            |        x         |             |                             |
 | Yandex Lockbox                   |              |              |                      |            x            |        x         |             |                             |
 | Yandex Certificate Manager       |              |              |                      |            x            |        x         |             |                             |

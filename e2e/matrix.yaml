@@ -177,6 +177,20 @@ areas:
       - "e2e/suites/provider/cases/secretserver/**"
     enabled: true
 
+  # Sigma Config runs against a live, vendor-run test organization whose keys are
+  # not repo secrets, so this leg is off in CI. The suite skips without
+  # SIGMA_CONFIG_API_KEY and SIGMA_CONFIG_NOGRANT_API_KEY and is run locally.
+  - name: sigmaconfig
+    suite: provider
+    labels: "sigmaconfig && !managed"
+    providers: [sigmaconfig]
+    secret_groups: []
+    needs_secrets: false
+    paths:
+      - "providers/v1/sigmaconfig/**"
+      - "e2e/suites/provider/cases/sigmaconfig/**"
+    enabled: false
+
   # Infisical runs against an in-cluster Infisical addon (addon.NewInfisical),
   # not an external tenant, so it needs no repo secrets despite being a SaaS.
   - name: infisical
